@@ -1,6 +1,5 @@
 package com.example.timofeev.shopping_list.presentation
 
-import android.content.ClipData.Item
 import android.os.Bundle
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
@@ -19,7 +18,8 @@ class MainActivity : AppCompatActivity() {
     setupRecyclerView()
     viewModel = ViewModelProvider(this)[MainViewModel::class.java]
     viewModel.shopList.observe(this) {
-      shopListAdapter.shopList = it
+      /** Изменение */
+      shopListAdapter.submitList(it)
     }
   }
 
@@ -57,7 +57,8 @@ class MainActivity : AppCompatActivity() {
       }
 
       override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
-        val item = shopListAdapter.shopList[viewHolder.adapterPosition]
+        /** Изменение */
+        val item = shopListAdapter.currentList[viewHolder.adapterPosition]
         viewModel.deleteShopItem(item)
       }
     }

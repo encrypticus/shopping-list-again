@@ -1,36 +1,36 @@
 package com.example.timofeev.shopping_list.presentation
 
-import android.util.Log
 import android.view.LayoutInflater
-import android.view.View
 import android.view.ViewGroup
-import android.widget.TextView
-import androidx.core.content.ContextCompat
-import androidx.recyclerview.widget.DiffUtil
-import androidx.recyclerview.widget.RecyclerView
+import androidx.recyclerview.widget.ListAdapter
 import com.example.timofeev.shopping_list.R
 import com.example.timofeev.shopping_list.domain.ShopItem
 
-class ShopListAdapter : RecyclerView.Adapter<ShopListAdapter.ShopItemViewHolder>() {
-  class ShopItemViewHolder(val view: View) : RecyclerView.ViewHolder(view) {
-    val tvName = view.findViewById<TextView>(R.id.tv_name)
-    val tvCount = view.findViewById<TextView>(R.id.tv_count)
-  }
+/**
+ * Изменение.
+ * Теперь наследуемся не от RecyclerView.Adapter, а от ListAdapter
+ */
+class ShopListAdapter : ListAdapter<ShopItem, ShopItemViewHolder>(ShopItemDiffCallback()) {
+  /** Изменение. Класс ShopItemViewHolder вынесен в отдельный файл */
 
-  var count = 0;
-  var shopList = listOf<ShopItem>()
-    set(value) {
-      val callback = ShopListDiffCallback(shopList, value)
-      val diffResult = DiffUtil.calculateDiff(callback)
-      diffResult.dispatchUpdatesTo(this)
-      field = value
-    }
+  /**
+   * Изменение.
+   * Преимущество ListAdapter в том, что он скрывает в себе всю логику работы со списком.
+   * Нам больше не нужно хранить ссылку на него самостоятельно. Можно его удалить (закомментировал)
+   */
+//  var shopList = listOf<ShopItem>()
+//    set(value) {
+//      val callback = ShopListDiffCallback(shopList, value)
+//      val diffResult = DiffUtil.calculateDiff(callback)
+//      diffResult.dispatchUpdatesTo(this)
+//      field = value
+//    }
 
   var onShopItemLongClickListener: ((ShopItem) -> Unit)? = null
   var onShopItemClickListener: ((ShopItem) -> Unit)? = null
 
   override fun getItemViewType(position: Int): Int {
-    val item = shopList[position]
+    val item = getItem(position) /** Изменение  */
     return if (item.enabled) {
       VIEW_TYPE_ENABLED
     } else {
@@ -48,13 +48,16 @@ class ShopListAdapter : RecyclerView.Adapter<ShopListAdapter.ShopItemViewHolder>
     return ShopItemViewHolder(view)
   }
 
-  override fun getItemCount(): Int {
-    return shopList.size
-  }
+  /**
+   * Изменение.
+   * Этот метод больше не нужен, т.к. работа со списком скрыта внутри класса ListAdapter
+   */
+//  override fun getItemCount(): Int {
+//    return shopList.size
+//  }
 
   override fun onBindViewHolder(holder: ShopItemViewHolder, position: Int) {
-    Log.d("ShopListAdapter", "onCreateViewHolder, count ${++count}")
-    val shopItem = shopList[position]
+    val shopItem = getItem(position) /** Изменение  */
 
     holder.view.setOnLongClickListener {
       onShopItemLongClickListener?.invoke(shopItem)
@@ -69,17 +72,23 @@ class ShopListAdapter : RecyclerView.Adapter<ShopListAdapter.ShopItemViewHolder>
     holder.tvCount.text = shopItem.count.toString()
   }
 
-  override fun onViewRecycled(holder: ShopItemViewHolder) {
-    super.onViewRecycled(holder)
-    holder.tvName.text = ""
-    holder.tvCount.text = ""
-    holder.tvName.setTextColor(
-      ContextCompat.getColor(
-        holder.view.context,
-        android.R.color.white
-      )
-    )
-  }
+  /**
+   * Изменение.
+   * Нам больше не нужно устанавливать значения по умолчанию, т.к. у нас в методе onBindViewHolder
+   * больше нет установки значений по какому-то условию. Мы в любом случае устанавливаем у элементов
+   * какой-то текст и слушатели кликов. Поэтому этот метод больше не нужен
+   */
+//  override fun onViewRecycled(holder: ShopItemViewHolder) {
+//    super.onViewRecycled(holder)
+//    holder.tvName.text = ""
+//    holder.tvCount.text = ""
+//    holder.tvName.setTextColor(
+//      ContextCompat.getColor(
+//        holder.view.context,
+//        android.R.color.white
+//      )
+//    )
+//  }
 
   companion object {
     const val VIEW_TYPE_ENABLED = 1
