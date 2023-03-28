@@ -3,24 +3,11 @@ package com.example.timofeev.shopping_list.presentation
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
-import android.text.Editable
-import android.text.TextWatcher
-import android.widget.Button
-import android.widget.EditText
 import androidx.appcompat.app.AppCompatActivity
-import androidx.lifecycle.ViewModelProvider
 import com.example.timofeev.shopping_list.R
 import com.example.timofeev.shopping_list.domain.ShopItem
-import com.google.android.material.textfield.TextInputLayout
 
-class ShopItemActivity : AppCompatActivity() {
-  private lateinit var tilName: TextInputLayout
-  private lateinit var tilCount: TextInputLayout
-  private lateinit var etName: EditText
-  private lateinit var etCount: EditText
-  private lateinit var buttonSave: Button
-  private lateinit var viewModel: ShopItemViewModel
-
+class ShopItemActivity : AppCompatActivity(), ShopItemFragment.OnEditingChangeListener {
   private var screenMode = MODE_UNKNOWN
   private var shopItemId = ShopItem.UNDEFINED_ID
 
@@ -28,79 +15,24 @@ class ShopItemActivity : AppCompatActivity() {
     super.onCreate(savedInstanceState)
     setContentView(R.layout.activity_shop_item)
     parseIntent()
-    viewModel = ViewModelProvider(this)[ShopItemViewModel::class.java]
-    initViews()
-    addTextChangeListeners()
-    launchRightMode()
-    observeViewModel()
+    if (savedInstanceState == null) {
+      launchRightMode()
+    }
   }
 
-  private fun observeViewModel() {
-    viewModel.errorInputCount.observe(this) {
-      val message = if (it) {
-        getString(R.string.error_input_count)
-      } else {
-        null
-      }
-      tilCount.error = message
-    }
-
-    viewModel.errorInputName.observe(this) {
-      val message = if (it) {
-        getString(R.string.error_input_name)
-      } else {
-        null
-      }
-      tilName.error = message
-    }
-
-    viewModel.closeScreen.observe(this) {
-      finish()
-    }
+  override fun onEditingChanged() {
+    finish()
   }
 
   private fun launchRightMode() {
-    when (screenMode) {
-      MODE_ADD -> launchAddMode()
-      MODE_EDIT -> launchEditMode()
+    val fragment = when (screenMode) {
+      MODE_ADD -> ShopItemFragment.newInstanceAddItem()
+      MODE_EDIT -> ShopItemFragment.newInstanceEditItem(shopItemId)
+      else -> throw RuntimeException("Unknown screen mode $screenMode")
     }
-  }
-
-  private fun addTextChangeListeners() {
-    etName.addTextChangedListener(object : TextWatcher {
-      override fun onTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {
-        viewModel.resetInputNameError()
-      }
-
-      override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {}
-      override fun afterTextChanged(p0: Editable?) {}
-    })
-
-    etCount.addTextChangedListener(object : TextWatcher {
-      override fun onTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {
-        viewModel.resetInputCountError()
-      }
-
-      override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {}
-      override fun afterTextChanged(p0: Editable?) {}
-    })
-  }
-
-  private fun launchAddMode() {
-    buttonSave.setOnClickListener {
-      viewModel.addShopItem(etName.text.toString(), etCount.text.toString())
-    }
-  }
-
-  private fun launchEditMode() {
-    viewModel.getShopItem(shopItemId)
-    viewModel.shopItem.observe(this) {
-      etName.setText(it.name)
-      etCount.setText(it.count.toString())
-    }
-    buttonSave.setOnClickListener {
-      viewModel.editShopItem(etName.text.toString(), etCount.text.toString())
-    }
+    supportFragmentManager.beginTransaction()
+      .replace(R.id.shop_item_container, fragment)
+      .commit()
   }
 
   private fun parseIntent() {
@@ -120,14 +52,6 @@ class ShopItemActivity : AppCompatActivity() {
       }
       shopItemId = intent.getIntExtra(EXTRA_SHOP_ITEM_ID, ShopItem.UNDEFINED_ID)
     }
-  }
-
-  private fun initViews() {
-    tilName = findViewById(R.id.til_name)
-    tilCount = findViewById(R.id.til_count)
-    etName = findViewById(R.id.et_name)
-    etCount = findViewById(R.id.et_count)
-    buttonSave = findViewById(R.id.save_button)
   }
 
   companion object {
